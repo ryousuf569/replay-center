@@ -1,1 +1,4 @@
 .env
+run_update.bat
+logs/
+logs/*
