@@ -2,6 +2,7 @@ from nba_api.stats.endpoints import playergamelogs
 import pandas as pd
 from dotenv import load_dotenv
 import os
+import time
 from supabase import create_client
 
 load_dotenv()
@@ -23,13 +24,24 @@ def get_latest_date():
 
 def fetch_game_logs(start_date):
 
-    parameters = {'season_nullable' : SEASON}
+    parameters = {'season_nullable' : SEASON, "timeout": 90}
     if start_date is not None:
         parameters['date_from_nullable'] = start_date
     else:
         parameters['date_from_nullable'] = ''
 
     df = playergamelogs.PlayerGameLogs(**parameters).get_data_frames()[0]
+
+    for attempt in range(4):
+        try:
+            return playergamelogs.PlayerGameLogs(**parameters).get_data_frames()[0]
+        except Exception as e:
+            if attempt == 3:
+                raise
+            wait = 2 ** attempt
+            print(f"Request failed: {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+
     return df
 
 def format_logs(df):
