@@ -1,4 +1,4 @@
-from nba_api.stats.endpoints import leaguedashplayerstats, playergamelogs
+from nba_api.stats.endpoints import playergamelogs
 import pandas as pd
 from dotenv import load_dotenv
 import os
@@ -13,11 +13,14 @@ supabase = create_client(SB_URL, SB_KEY)
 TABLE = "players"
 SEASON = "2025-26"
 
-players = leaguedashplayerstats.LeagueDashPlayerStats(season='2025-26').get_data_frames()[0]
+players = playergamelogs.PlayerGameLogs(season_nullable=SEASON).get_data_frames()[0]
 player_df = players[['PLAYER_ID', 'PLAYER_NAME']].drop_duplicates().rename(
     columns={
     "PLAYER_ID": "player_id",
-    "PLAYER_NAME": "player_name"})
+    "PLAYER_NAME": "player_name"}).sort_values("player_name").reset_index(drop=True)
+
+player_df = player_df[player_df["player_name"].notna() & 
+                      (player_df["player_name"].astype(str).str.strip() != "")]
 
 players_records = player_df.to_dict(orient="records")
 
